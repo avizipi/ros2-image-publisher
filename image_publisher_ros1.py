@@ -3,14 +3,17 @@
 import cv2
 import rospy
 from sensor.msg import Image
+from cv_bridge import CvBridge
+from cv_bridge import CvBridge, CvBridgeError
 
+bridge = CvBridge()
 image_publisher = rospy.Publisher('image', Image, queue_size=1)
 rospy.loginfo("initializing node")
 rospy.init_node('image_tutorial')
 
 rospy.loginfo("initializing camera")
 cam = cv2.VideoCapture(0)
-cv2.namedWindow("test")
+cv2.namedWindow("image_tutorial")
 
 
 while True:
@@ -32,7 +35,12 @@ while True:
     elif pressed == chr(32).encode():
         # publishing image if space pressed
         rospy.loginfo("sending_image")
-        image_publisher.publish(frame)
+        try:
+             msg = bridge.cv2_to_imgmsg(frame, "bgr8")
+             image_publisher.publish(msg)
+        except CvBridgeError as e:
+             rospy.loginfo(e)
+       
 
 # closing
 cam.release()
